@@ -149,7 +149,7 @@ const main = async () => {
         }
 
         fs.writeFile(
-          "./songs/unformat_songs/site2_songs/" + name.split("|")[0] + ".txt",
+          "../songs/unformat_songs/site2_songs/" + name.split("|")[0] + ".txt",
           "Song Name: " +
             name +
             "\n" +

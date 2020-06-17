@@ -3,7 +3,7 @@ const fs = require("fs");
 //joining path of directory
 const directoryPath = path.join(
   __dirname,
-  "./songs/unformat_songs/site2_songs/"
+  "../songs/unformat_songs/site2_songs/"
 );
 const readline = require("readline");
 const util = require("util");
@@ -26,15 +26,18 @@ async function run() {
 
     //   });
   });
-  await writFile("./no_author.txt", no_author_list, function (err) {
-    if (err) console.log(err);
-    console.log("Saved!", "no_author");
+  await writFile("../no_author.txt", no_author_list, function (err) {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log("Saved!", "no_author");
+    }
   });
 }
 
 async function processLineByLine(filename) {
   const fileStream = fs.createReadStream(
-    "./songs/unformat_songs/site2_songs/" + filename
+    "../songs/unformat_songs/site2_songs/" + filename
   );
 
   const rl = readline.createInterface({
@@ -105,14 +108,14 @@ async function processLineByLine(filename) {
       line.substring(7, line.length) === " "
     ) {
       no_author_list.push(filename);
-      fs.appendFile("./no_author.txt", filename + "\n", (err) => {
+      fs.appendFile("../no_author.txt", filename + "\n", (err) => {
         if (err) console.log(err);
       });
     }
   }
   formattedSong = formattedSong.replace("author", "Singer");
   fs.writeFile(
-    "./songs/format_songs/site2_songs/" + filename,
+    "../songs/format_songs/site2_songs/" + filename,
     formattedSong,
     function (err) {
       if (err) console.log(err);

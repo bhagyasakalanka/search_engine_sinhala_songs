@@ -1,7 +1,7 @@
 const path = require("path");
 const fs = require("fs");
 //joining path of directory
-const dir_path = "songs/unformat_songs/site2_songs/";
+const dir_path = "../songs/unformat_songs/site2_songs/";
 const directoryPath = path.join(__dirname, dir_path);
 const readline = require("readline");
 const util = require("util");
@@ -28,10 +28,6 @@ async function run() {
     //   const file = files[index];
     //   processLineByLine(file, index);
     // }
-  });
-  await writFile("./no_author.txt", no_author_list, function (err) {
-    if (err) console.log(err);
-    console.log("Saved!", "no_author");
   });
 }
 
@@ -70,7 +66,7 @@ async function processLineByLine(filename, index) {
   data_json["lyrics"] = fullSong;
 
   fs.appendFile(
-    "data.json",
+    "../data.json",
     JSON.stringify({ index: index_json }) +
       "\n" +
       JSON.stringify({ fields: data_json }) +
