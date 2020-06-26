@@ -94,7 +94,8 @@ async function processLineByLine(filename) {
         line.substring(0, 5) === "VERSE" ||
         line.substring(0, 6) === "VEARSE" ||
         line.substring(0, 6) === "CHORUS" ||
-        line.substring(0, 6) === "author"
+        line.substring(0, 6) === "author" ||
+        line.substring(0, 6) === "Movie"
       ) {
         var format_line = "";
         if (line.substring(0, 9) === "Song Name") {
@@ -127,6 +128,11 @@ async function processLineByLine(filename) {
           format_line += lyrics;
         } else if (line.substring(0, 6) === "Music") {
           format_line += "සංගීතය";
+          var music = line.substring(7, line.length).trim();
+          music = singlishParser(music);
+          format_line += music;
+        } else if (line.substring(0, 5) === "Movie") {
+          format_line += "movie";
           var music = line.substring(7, line.length).trim();
           music = singlishParser(music);
           format_line += music;

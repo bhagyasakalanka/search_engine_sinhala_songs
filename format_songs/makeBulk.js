@@ -1,5 +1,8 @@
 const path = require("path");
 const fs = require("fs");
+const singlishParser = require("../simple_singlish_to_sinhala_parser/singlish_parser");
+const genreParser = require("../simple_singlish_to_sinhala_parser/genre_parser");
+
 //joining path of directory
 const dir_path = "../songs/format_songs/site2_songs/";
 const directoryPath = path.join(__dirname, dir_path);
@@ -38,7 +41,7 @@ async function processLineByLine(filename, index) {
 
   data_json = {};
 
-  var fullSong = fs.readFileSync(dir_path + filename, "utf-8");
+  //var fullSong = fs.readFileSync(dir_path + filename, "utf-8");
 
   const fileStream = fs.createReadStream(dir_path + filename);
 
@@ -46,25 +49,45 @@ async function processLineByLine(filename, index) {
     input: fileStream,
     crlfDelay: Infinity,
   });
-
+  var fullSong = "";
   for await (const line of rl) {
     if (line.substring(0, 9) === "Song Name") {
-      data_json["සින්දුව"] = line.split(":")[1];
+      var songName = line.substring(10, line.length).trim().split("|");
+      if (songName[1] === undefined) {
+        songName = songName[0].split("–");
+        if (songName[1] === undefined) {
+          songName = songName[0].split("-");
+        }
+      }
+      data_json["song_name"] = songName[1];
     } else if (line.substring(0, 6) === "Artist") {
-      data_json["ගායකයා"] = line.split(":")[1];
+      var artistName = line.substring(7, line.length).trim();
+
+      artistName = singlishParser(artistName);
+      data_json["artist"] = artistName;
     } else if (line.substring(0, 5) === "Genre") {
-      data_json["වර්ගය"] = line.split(":")[1];
+      var genre = line.substring(6, line.length).trim();
+      genre = genreParser(genre);
+      data_json["genre"] = genre;
     } else if (line.substring(0, 6) === "Lyrics") {
-      data_json["පද_රචනය"] = line.split(":")[1];
+      var lyrics = line.substring(7, line.length).trim();
+      lyrics = singlishParser(lyrics);
+      data_json["lyrics_by"] = lyrics;
     } else if (line.substring(0, 5) === "Music") {
-      data_json["සංගීතය"] = line.split(":")[1];
+      var music = line.substring(6, line.length).trim();
+      music = singlishParser(music);
+      data_json["music"] = music;
     } else if (line.substring(0, 5) === "Movie") {
-      data_json["චිත්‍රපටය"] = line.split(":")[1];
+      var movie = line.substring(6, line.length).trim();
+      movie = singlishParser(movie);
+      data_json["movie"] = movie;
+    } else {
+      fullSong += line.trim() + "\n";
     }
   }
-  data_json["කාලය  "] = durationGenrator();
-  data_json["ඇගැයුම"] = ratingsGenerator();
-  data_json["පද"] = fullSong;
+  data_json["duration"] = durationGenrator();
+  data_json["rating"] = ratingsGenerator();
+  data_json["lyrics"] = fullSong;
 
   fs.appendFile(
     "../data.txt",

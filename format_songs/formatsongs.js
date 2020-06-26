@@ -89,7 +89,8 @@ async function processLineByLine(filename) {
         line.substring(0, 5) === "Music" ||
         line.substring(0, 6) === "CHORUS" ||
         line.substring(0, 5) === "VERSE" ||
-        line.substring(0, 6) === "VEARSE"
+        line.substring(0, 6) === "VEARSE" ||
+        line.substring(0, 5) === "Movie"
       ) {
         formattedSong += line + "\n";
       } else if (

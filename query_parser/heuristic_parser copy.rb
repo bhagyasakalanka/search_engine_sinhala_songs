@@ -172,7 +172,7 @@ end
 
 
 
-parse_tree = QueryParser.new.parse('cats "in the +hat" +adfd fdfd cv 1970s ')
+parse_tree = QueryParser.new.parse('cats "in the hat" 1970s adfd +fdfd cv')
 
 query = QueryTransformer.new.apply(parse_tree)
 
