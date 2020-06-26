@@ -1,0 +1,33 @@
+{
+    "settings": {
+        "number_of_shards": 2
+    },
+    "mappings": {
+        "properties": {
+            "song_name": {
+                "type": "text"
+            },
+            "artist": {
+                "type": "text"
+            },
+            "genre": {
+                "type": "text"
+            },
+            "lyrics_by": {
+                "type": "text"
+            },
+            "music": {
+                "type": "text"
+            },
+            "duration": {
+                "type": "text"
+            },
+            "movie": {
+                "type": "text"
+            },
+            "lyrics": {
+                "type": "text"
+            }
+        }
+    }
+}

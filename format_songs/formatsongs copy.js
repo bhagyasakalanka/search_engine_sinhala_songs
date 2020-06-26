@@ -1,5 +1,8 @@
+const singlishParser = require("../simple_singlish_to_sinhala_parser/singlish_parser");
+const genreParser = require("../simple_singlish_to_sinhala_parser/genre_parser");
 const path = require("path");
 const fs = require("fs");
+
 //joining path of directory
 const directoryPath = path.join(
   __dirname,
@@ -89,9 +92,54 @@ async function processLineByLine(filename) {
         line.substring(0, 5) === "Music" ||
         line.substring(0, 6) === "CHORUS" ||
         line.substring(0, 5) === "VERSE" ||
-        line.substring(0, 6) === "VEARSE"
+        line.substring(0, 6) === "VEARSE" ||
+        line.substring(0, 6) === "CHORUS" ||
+        line.substring(0, 6) === "author"
       ) {
-        formattedSong += line + "\n";
+        var format_line = "";
+        if (line.substring(0, 9) === "Song Name") {
+          format_line += "සින්දුව";
+          var songName = line.substring(10, line.length).trim().split("|");
+          if (songName[1] === undefined) {
+            songName = songName[0].split("–");
+            if (songName[1] === undefined) {
+              songName = songName[0].split("-");
+            }
+          }
+
+          format_line += songName[1];
+        } else if (line.substring(0, 6) === "Artist") {
+          format_line += "ගායකයා";
+          var artistName = line.substring(7, line.length).trim();
+
+          artistName = singlishParser(artistName);
+
+          format_line += artistName;
+        } else if (line.substring(0, 6) === "Genre") {
+          format_line += "වර්ගය";
+          var genre = line.substring(7, line.length).trim();
+          genre = genreParser(genre);
+          format_line += genre;
+        } else if (line.substring(0, 6) === "Lyrics") {
+          format_line += "පද_රචනය ";
+          var lyrics = line.substring(7, line.length).trim();
+          lyrics = singlishParser(lyrics);
+          format_line += lyrics;
+        } else if (line.substring(0, 6) === "Music") {
+          format_line += "සංගීතය";
+          var music = line.substring(7, line.length).trim();
+          music = singlishParser(music);
+          format_line += music;
+        } else if (line.substring(0, 6) === "VERSE") {
+          format_line += "VERSE";
+        } else if (line.substring(0, 6) === "VEARSE") {
+          format_line += "VERSE";
+        } else if (line.substring(0, 6) === "CHORUS") {
+          format_line += "CHORUS";
+        } else if (line.substring(0, 6) === "author") {
+          continue;
+        }
+        formattedSong += format_line + "\n";
       } else if (
         englishLetters.includes(line[0].toLowerCase()) ||
         line[0] === " " ||
@@ -102,15 +150,6 @@ async function processLineByLine(filename) {
       } else {
         formattedSong += line + "\n";
       }
-    }
-    if (
-      line.substring(0, 7) === "author:" &&
-      line.substring(7, line.length) === " "
-    ) {
-      no_author_list.push(filename);
-      fs.appendFile("../no_author.txt", filename + "\n", (err) => {
-        if (err) console.log(err);
-      });
     }
   }
   formattedSong = formattedSong.replace("author", "Singer");

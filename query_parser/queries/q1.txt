@@ -1,0 +1,11 @@
+{
+  "query": {
+    "match": {
+      "artist": {
+        "query": "this is a test",
+        "operator": "or",
+        "zero_terms_query": "all"
+      }
+    }
+  }
+}
