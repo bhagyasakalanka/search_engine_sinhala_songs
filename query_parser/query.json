@@ -1,0 +1,1 @@
+{"size":10,"sort":[{"rating":"desc","_score":"desc"}],"query":{"bool":{"must":[{"match":{"artist":{"query":"amaradewa"}}},{"match":{"artist":{"query":"latha"}}},{"range":{"duration":{"gte":180,"lte":350}}}]}}}
