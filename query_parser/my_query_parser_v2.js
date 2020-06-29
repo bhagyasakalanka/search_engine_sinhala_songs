@@ -21,6 +21,7 @@ function query_parser(text) {
     music: [],
     duration: [],
     rating: [],
+    movie: [],
   };
   var should_query = {
     _all: [],
@@ -29,13 +30,39 @@ function query_parser(text) {
     music: [],
     duration: [],
     rating: [],
+    movie: [],
   };
   var must_not_query = {};
   var range_query = {};
   var top_query = {};
   var phase_query = [];
   var sort_query = [];
-  const wordList = text.split(` `);
+  const wordList = [];
+  var phase = "";
+  var word = "";
+  var isphaseStarted = false;
+  for (let i = 0; i < text.length; i++) {
+    const element = text[i];
+    if (element === '"' || isphaseStarted) {
+      phase += element;
+      if (element === '"') {
+        isphaseStarted = !isphaseStarted;
+        if (isphaseStarted === false) {
+          wordList.push(phase.trim());
+          phase = "";
+        }
+      }
+    } else {
+      word += element;
+
+      if (element === " ") {
+        if (word.trim() !== "") {
+          wordList.push(word.trim());
+        }
+        word = "";
+      }
+    }
+  }
 
   var i = 0;
   var andWords = [];
@@ -46,10 +73,10 @@ function query_parser(text) {
       var previousWord = wordList[i - 1];
       andWords.push(previousWord);
       andWords.push(wordList[i]);
-      if (previousWord[previousWord.length - 1] === '"') {
-        var [phase, andList] = findPhaseBackword(i - 1);
-        must_query._all.push([phase, "multi_match"]);
-        andWords = andWords.concat(andList);
+      if (previousWord[0] === '"') {
+        must_query._all.push([previousWord, "multi_match_phrase"]);
+
+        andWords = andWords.concat(previousWord);
       } else if (
         previousWord.substring(previousWord.length - 2, previousWord.length) ===
         artist_charactor
@@ -59,17 +86,16 @@ function query_parser(text) {
           "term",
         ]);
       } else {
-        console.log(must_query);
         must_query._all.push([previousWord, "multi_match"]);
       }
       //handle next word
       var nextWord = wordList[i + 1];
       andWords.push(nextWord);
       if (nextWord[0] === '"') {
-        var [phase, andList] = findPhaseForword(i + 1);
-        must_query._all.push([phase, "multi_match"]);
-        andWords = andWords.concat(andList);
-        i += andList.length + 1;
+        must_query._all.push([nextWord, "multi_match_phrase"]);
+        console.log("nextWord", nextWord);
+        i++;
+        andWords = andWords.concat(nextWord);
       } else if (
         nextWord.substring(nextWord.length - 2, nextWord.length) ===
         artist_charactor
@@ -97,7 +123,6 @@ function query_parser(text) {
   i = 0;
   while (i < wordList.length) {
     var currentWord = wordList[i];
-
     var wordDouble = wordList[i] + " " + wordList[i + 1];
     //top # songs handle
     if (wordDouble === "හොඳම සින්දු" || wordDouble === "හොඳම ගීත") {
@@ -115,7 +140,7 @@ function query_parser(text) {
     else if (currentWord === "විනාඩි") {
       if (wordList[i + 2] == "වැඩි") {
         var number_g = wordList[i + 1];
-        console.log(number_g[number_g.length - 1]);
+
         if (number_g[number_g.length - 1] === "ට") {
           number_g = number_g.substring(0, number_g.length - 1);
           number_g =
@@ -181,16 +206,38 @@ function query_parser(text) {
               : numberMap[number_g];
         }
         must_query.duration.push([{ gte: number_l, lte: number_g }, "range"]);
-        if (wordList[i + 4] === "සින්දු" || wordList[i + 3] === "ගීත") {
+
+        if (wordList[i + 4] === "සින්දු" || wordList[i + 4] === "ගීත") {
           i++;
         }
+
         i += 4;
       }
-    } // match phases handle
+    } //write
+    else if (currentWord === "ලිවූ" || currentWord === "රචිත") {
+      must_query.lyrics_by.push([wordList[i - 1], "term"]);
+      i++;
+    } else if (
+      currentWord === "ගයනා" ||
+      currentWord === "ගැයූ" ||
+      currentWord === "ගයන"
+    ) {
+      must_query.artist.push([wordList[i - 1], "term"]);
+      i++;
+    } else if (currentWord === "චිත්‍රපටයේ" || currentWord === "සලරුවේ") {
+      must_query.movie.push([wordList[i - 1], "term"]);
+      if (wordList[i + 1] === "සින්දු" || wordList[i + 1] === "ගීත") {
+        i++;
+      }
+      i++;
+    }
+
+    // match phases handle
     else if (currentWord[0] === '"') {
-      var [phase, andList] = findPhaseForword(i);
-      should_query._all.push([phase, "multi_match"]);
-      i += andList.length + 1;
+      var phase = currentWord.substring(1, currentWord.length - 1);
+      should_query._all.push([phase, "multi_match_phrase"]);
+      console.log(phase);
+      i += 1;
     } // normal term handle
     else if (
       currentWord.substring(currentWord.length - 2, currentWord.length) ===
@@ -247,17 +294,16 @@ function query_parser(text) {
   return [must_query, should_query, sort_query];
 }
 
-var sample_text = "අමරදේව සහ ලතාගෙ හොඳම ගීත 10 විනාඩි 3ත් 4ත් අතර";
+var sample_text =
+  "අමරදේව සහ ලතගෙ හොඳම ගීත 10 විනාඩි 3ත් 4ත් අතර ගීත සමන් රචිත අමර චිත්‍රපටයේ ගීත කමල් ලියූ";
 
 t1 = Date.now();
 const [a, b, c] = query_parser(sample_text);
 t2 = Date.now();
-console.log(t2 - t1);
 
 function query_generator(must_query, should_query, sort_query) {
   var query = {};
   if (sort_query.length > 0) {
-    console.log(sort_query[0].rating);
     query["size"] = sort_query[0].rating;
     query["sort"] = [{ rating: "desc", _score: "desc" }];
   }
@@ -280,21 +326,33 @@ function query_generator(must_query, should_query, sort_query) {
             temp_q_m.match[key] = { query: must_query[key][valIndex][0] };
             query.query.bool.must.push(temp_q_m);
             break;
-          case "match_phrase":
-            var temp_q_mp = { match_phrase: {} };
-            temp_q_mp.match_phrase[key] = {
-              query: must_query[key][valIndex][0],
+          case "multi_match_phrase":
+            var temp_q_mm = {
+              multi_match: {
+                fields: [
+                  "artist",
+                  "lyrics",
+                  "lyrics_by",
+                  "music",
+                  "movie",
+                  "genre",
+                  "song_name",
+                ],
+                type: "phrase",
+              },
             };
-            query.query.bool.must.push(temp_q_mp);
+            temp_q_mm.multi_match["query"] = must_query[key][valIndex][0];
+            query.query.bool.must.push(temp_q_mm);
             break;
           case "range":
             var temp_q_r = { range: { duration: {} } };
             if (must_query[key][valIndex][0].gte !== undefined) {
-              temp_q_r.range.duration["gte"] = must_query[key][valIndex][0].gte;
+              temp_q_r.range.duration["gte"] =
+                must_query[key][valIndex][0].gte * 60;
             }
             if (must_query[key][valIndex][0].lte !== undefined) {
               temp_q_r.range["duration"]["lte"] =
-                must_query[key][valIndex][0].lte;
+                must_query[key][valIndex][0].lte * 60;
             }
             query.query.bool.must.push(temp_q_r);
             break;
