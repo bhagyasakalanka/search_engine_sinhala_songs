@@ -1,10 +1,7 @@
 {
+  "size": 10,
+  "sort": [{ "rating": "desc", "_score": "desc" }],
   "query": {
-    "bool": {
-      "must": [
-        { "match": { "artist": { "query": "ජෝති" } } },
-        { "match": { "artist": { "query": "ලතා" } } }
-      ]
-    }
+    "bool": { "should": [{ "match": { "artist": { "query": "අමරදේව" } } }] }
   }
 }

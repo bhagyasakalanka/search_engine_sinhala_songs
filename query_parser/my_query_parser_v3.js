@@ -29,6 +29,8 @@ const keywords = [
   "සින්දු",
   "ගීත",
   "ලියූ",
+  "සහ",
+  "හා",
 ];
 function query_parser(text) {
   var text = text.toLowerCase();
@@ -51,7 +53,7 @@ function query_parser(text) {
     movie: [],
   };
   var must_not_query = {};
-  var range_query = {};
+  var filter_query = { duration: [] };
   var top_query = {};
   var phase_query = [];
   var sort_query = [];
@@ -86,13 +88,16 @@ function query_parser(text) {
   var andWords = [];
 
   while (i < wordList.length) {
-    if (wordList[i] === "සහ") {
+    if (wordList[i] === "සහ" || wordList[i] === "හා") {
       //handle previous word
       var previousWord = wordList[i - 1];
       andWords.push(previousWord);
       andWords.push(wordList[i]);
       if (previousWord[0] === '"') {
-        must_query._all.push([previousWord, "multi_match_phrase"]);
+        must_query._all.push([
+          removeQuotos(previousWord),
+          "multi_match_phrase",
+        ]);
 
         andWords = andWords.concat(previousWord);
       } else if (
@@ -110,7 +115,7 @@ function query_parser(text) {
       var nextWord = wordList[i + 1];
       andWords.push(nextWord);
       if (nextWord[0] === '"') {
-        must_query._all.push([nextWord, "multi_match_phrase"]);
+        must_query._all.push([removeQuotos(nextWord), "multi_match_phrase"]);
         i++;
         andWords = andWords.concat(nextWord);
       } else if (
@@ -174,7 +179,7 @@ function query_parser(text) {
               : numberMap[number_g];
         }
         console.log(number_g);
-        must_query.duration.push([{ gte: number_g }, "range"]);
+        filter_query.duration.push([{ gte: number_g }, "range"]);
         if (wordList[i + 3] === "සින්දු" || wordList[i + 3] === "ගීත") {
           i++;
         }
@@ -194,7 +199,7 @@ function query_parser(text) {
               ? parseInt(number_l)
               : numberMap[number_l];
         }
-        must_query.duration.push([{ lte: number_l }, "range"]);
+        filter.duration.push([{ lte: number_l }, "range"]);
         if (wordList[i + 3] === "සින්දු" || wordList[i + 3] === "ගීත") {
           i++;
         }
@@ -227,7 +232,7 @@ function query_parser(text) {
               ? parseInt(number_g)
               : numberMap[number_g];
         }
-        must_query.duration.push([{ gte: number_l, lte: number_g }, "range"]);
+        filter_query.duration.push([{ gte: number_l, lte: number_g }, "range"]);
 
         if (wordList[i + 4] === "සින්දු" || wordList[i + 4] === "ගීත") {
           i++;
@@ -241,17 +246,23 @@ function query_parser(text) {
       currentWord === "රචිත" ||
       currentWord === "ලියූ"
     ) {
-      must_query.lyrics_by.push([wordList[i - 1], "term"]);
+      must_query.lyrics_by.push([removeQuotos(wordList[i - 1]), "term"]);
+      if (wordList[i + 1] === "සින්දු" || wordList[i + 1] === "ගීත") {
+        i++;
+      }
       i += 1;
     } else if (
       currentWord === "ගයනා" ||
       currentWord === "ගැයූ" ||
       currentWord === "ගයන"
     ) {
-      must_query.artist.push([wordList[i - 1], "term"]);
+      must_query.artist.push([removeQuotos(wordList[i - 1]), "term"]);
+      if (wordList[i + 1] === "සින්දු" || wordList[i + 1] === "ගීත") {
+        i++;
+      }
       i += 1;
     } else if (currentWord === "චිත්‍රපටයේ" || currentWord === "සලරුවේ") {
-      must_query.movie.push([wordList[i - 1], "term"]);
+      must_query.movie.push([removeQuotos(wordList[i - 1]), "term"]);
       if (wordList[i + 1] === "සින්දු" || wordList[i + 1] === "ගීත") {
         i++;
       }
@@ -260,8 +271,11 @@ function query_parser(text) {
 
     // match phases handle
     else if (currentWord[0] === '"') {
-      var phase = currentWord.substring(1, currentWord.length - 1);
-      should_query._all.push([phase, "multi_match_phrase"]);
+      if (!keywords.includes(wordList[i + 1])) {
+        var phase = currentWord.substring(1, currentWord.length - 1);
+        should_query._all.push([phase, "multi_match_phrase"]);
+      }
+
       i += 1;
     } // normal term handle
     else if (
@@ -280,48 +294,21 @@ function query_parser(text) {
       i++;
     }
   }
-
-  function findPhaseBackword(index) {
-    var phase = " " + wordList[index].substring(0, wordList[index].length);
-    var andList = [];
-    var x = index - 1;
-    while (x >= 0) {
-      var neWord = wordList[x];
-      andList.push(neWord);
-      if (neWord[0] === '"') {
-        phase = neWord.substring(1, neWord.length) + phase;
-
-        break;
-      } else {
-        phase = " " + neWord + phase;
-      }
-      x--;
+  function removeQuotos(text) {
+    var txt = text;
+    if (txt[0] === '"') {
+      txt = txt.substring(1, txt.length);
     }
-    return [phase, andList];
+    if (txt[txt.length - 1] === '"') {
+      txt = txt.substring(0, txt.length - 1);
+    }
+    return txt;
   }
 
-  function findPhaseForword(index) {
-    var phase = wordList[index].substring(1, wordList[index].length) + " ";
-    var andList = [];
-    var x = index + 1;
-    while (x < wordList.length) {
-      var neWord = wordList[x];
-      andList.push(neWord);
-      if (neWord[neWord.length - 1] === '"') {
-        phase = phase + neWord.substring(0, neWord.length - 1);
-        break;
-      } else {
-        phase = phase + neWord + " ";
-      }
-      x++;
-    }
-    return [phase, andList];
-  }
-
-  return [must_query, should_query, sort_query];
+  return [must_query, should_query, sort_query, filter_query];
 }
 
-function query_generator(must_query, should_query, sort_query) {
+function query_generator(must_query, should_query, sort_query, filter_query) {
   var query = {};
   if (sort_query.length > 0) {
     query["size"] = sort_query[0].rating;
@@ -365,29 +352,18 @@ function query_generator(must_query, should_query, sort_query) {
             temp_q_mm.multi_match["query"] = must_query[key][valIndex][0];
             query.query.bool.must.push(temp_q_mm);
             break;
-          case "range":
-            var temp_q_r = { range: { duration: {} } };
-            if (must_query[key][valIndex][0].gte !== undefined) {
-              temp_q_r.range.duration["gte"] =
-                must_query[key][valIndex][0].gte * 60;
-            }
-            if (must_query[key][valIndex][0].lte !== undefined) {
-              temp_q_r.range["duration"]["lte"] =
-                must_query[key][valIndex][0].lte * 60;
-            }
-            query.query.bool.must.push(temp_q_r);
-            break;
+
           case "multi_match":
             var temp_q_mm = {
               multi_match: {
                 fields: [
                   "artist^4",
-                  "lyrics^1",
+                  "lyrics^3",
                   "lyrics_by^2",
                   "music^2",
                   "movie^1",
                   "genre^2",
-                  "song_name^2",
+                  "song_name^3",
                 ],
               },
             };
@@ -440,12 +416,12 @@ function query_generator(must_query, should_query, sort_query) {
               multi_match: {
                 fields: [
                   "artist^4",
-                  "lyrics^1",
+                  "lyrics^3",
                   "lyrics_by^2",
                   "music^2",
                   "movie^1",
                   "genre^2",
-                  "song_name^2",
+                  "song_name^3",
                 ],
               },
             };
@@ -459,15 +435,51 @@ function query_generator(must_query, should_query, sort_query) {
       }
     }
   }
+  var is_filter_started = false;
+  for (key in filter_query) {
+    if (filter_query[key].length !== 0) {
+      if (!is_filter_started) {
+        query.query.bool["filter"] = [];
+        is_filter_started = true;
+      }
+      for (valIndex = 0; valIndex < filter_query[key].length; valIndex++) {
+        switch (
+          filter_query[key][valIndex][filter_query[key][valIndex].length - 1]
+        ) {
+          case "range":
+            var temp_q_r = { range: { duration: {} } };
+            if (filter_query[key][valIndex][0].gte !== undefined) {
+              temp_q_r.range.duration["gte"] =
+                filter_query[key][valIndex][0].gte * 60;
+            }
+            if (filter_query[key][valIndex][0].lte !== undefined) {
+              temp_q_r.range["duration"]["lte"] =
+                filter_query[key][valIndex][0].lte * 60;
+            }
+            query.query.bool.filter.push(temp_q_r);
+            break;
+          default:
+            break;
+        }
+      }
+    }
+  }
 
   return query;
 }
-var sample_text =
-  'අමරදේව සහ ලතගෙ හොඳම ගීත 10 විනාඩි 3ත් 4ත් අතර ගීත සමන් රචිත අමර චිත්‍රපටයේ ගීත කමල් ලියූ "මගේ පුන්චි රෝස මලේ" බ්හග්‍ය ගැයූ ';
-var st = "බක්මහ දීගෙ චිත්‍රපටයේ ගීත ";
+var q1 = "දීවරයො චිත්‍රපටයේ ගීත ";
+var q2 = "ජෝතිපාලගෙ සහ ලතාගෙ සින්දු ";
+var q3 = "ජෝතිපාල හා ලතාගෙ සින්දු ";
+var q4 = "අමරදේවගෙ හොඳම ගීත 10 ";
+var q5 = "මිල්ටන්ගෙ විනාඩි 3ට වැඩි සින්දු ";
+var q6 = "කපුගේගෙ විනාඩි 3ත් 4ත් අතර සින්දු ";
+var q7 = '"කරුනාරත්න අබේසේකර" ලිවූ සින්දු ';
+var q8 = '"කරුනාරත්න අබේසේකර" ලිවූ හොඳම ගීත 20 ';
+var q9 = '"අතින් අතට" චිත්‍රපටයේ සින්දු';
+var q10 = "දීවරයො චිත්‍රපටයේ ගීත ";
 t1 = Date.now();
-const [a, b, c] = query_parser(st);
-q = query_generator(a, b, c);
+const [a, b, c, d] = query_parser(q4);
+q = query_generator(a, b, c, d);
 t2 = Date.now();
 console.log(t2 - t1);
 q = JSON.stringify(q);
