@@ -1,17 +1,35 @@
 const artist_charactor = "ගෙ";
 var fs = require("fs");
 const numberMap = {
-  one: 1,
-  two: 2,
-  three: 3,
-  four: 4,
-  five: 5,
-  six: 6,
-  seven: 7,
-  eight: 8,
-  nine: 9,
-  ten: 10,
+  එක: 1,
+  දෙක: 2,
+  තුන: 3,
+  හතර: 4,
+  පහ: 5,
+  හය: 6,
+  හත: 7,
+  අට: 8,
+  නවය: 9,
+  නමය: 9,
+  දහය: 10,
 };
+
+const keywords = [
+  "ගැයූ",
+  "රචිත",
+  "චිත්‍රපටයේ",
+  "සලරුවේ",
+  "ත්",
+  "ට",
+  "ගෙ",
+  "ලිවූ",
+  "ගයන",
+  "ගයනා",
+  "විනාඩි",
+  "සින්දු",
+  "ගීත",
+  "ලියූ",
+];
 function query_parser(text) {
   var text = text.toLowerCase();
   var must_query = {
@@ -93,7 +111,6 @@ function query_parser(text) {
       andWords.push(nextWord);
       if (nextWord[0] === '"') {
         must_query._all.push([nextWord, "multi_match_phrase"]);
-        console.log("nextWord", nextWord);
         i++;
         andWords = andWords.concat(nextWord);
       } else if (
@@ -121,8 +138,10 @@ function query_parser(text) {
   });
 
   i = 0;
+
   while (i < wordList.length) {
     var currentWord = wordList[i];
+
     var wordDouble = wordList[i] + " " + wordList[i + 1];
     //top # songs handle
     if (wordDouble === "හොඳම සින්දු" || wordDouble === "හොඳම ගීත") {
@@ -143,6 +162,7 @@ function query_parser(text) {
 
         if (number_g[number_g.length - 1] === "ට") {
           number_g = number_g.substring(0, number_g.length - 1);
+
           number_g =
             numberMap[number_g] === undefined
               ? parseInt(number_g)
@@ -153,6 +173,7 @@ function query_parser(text) {
               ? parseInt(number_g)
               : numberMap[number_g];
         }
+        console.log(number_g);
         must_query.duration.push([{ gte: number_g }, "range"]);
         if (wordList[i + 3] === "සින්දු" || wordList[i + 3] === "ගීත") {
           i++;
@@ -160,6 +181,7 @@ function query_parser(text) {
         i += 3;
       } else if (wordList[i + 2] === "අඩු") {
         var number_l = wordList[i + 1];
+
         if (number_l[number_l.length - 1] === "ට") {
           number_l = number_l.substring(0, number_l.length - 1);
           number_l =
@@ -214,42 +236,47 @@ function query_parser(text) {
         i += 4;
       }
     } //write
-    else if (currentWord === "ලිවූ" || currentWord === "රචිත") {
+    else if (
+      currentWord === "ලිවූ" ||
+      currentWord === "රචිත" ||
+      currentWord === "ලියූ"
+    ) {
       must_query.lyrics_by.push([wordList[i - 1], "term"]);
-      i++;
+      i += 1;
     } else if (
       currentWord === "ගයනා" ||
       currentWord === "ගැයූ" ||
       currentWord === "ගයන"
     ) {
       must_query.artist.push([wordList[i - 1], "term"]);
-      i++;
+      i += 1;
     } else if (currentWord === "චිත්‍රපටයේ" || currentWord === "සලරුවේ") {
       must_query.movie.push([wordList[i - 1], "term"]);
       if (wordList[i + 1] === "සින්දු" || wordList[i + 1] === "ගීත") {
         i++;
       }
-      i++;
+      i += 1;
     }
 
     // match phases handle
     else if (currentWord[0] === '"') {
       var phase = currentWord.substring(1, currentWord.length - 1);
       should_query._all.push([phase, "multi_match_phrase"]);
-      console.log(phase);
       i += 1;
     } // normal term handle
     else if (
       currentWord.substring(currentWord.length - 2, currentWord.length) ===
       artist_charactor
     ) {
-      should_queryartist.push([
+      should_query.artist.push([
         currentWord.substring(0, currentWord.length - 2),
         "term",
       ]);
       i++;
     } else {
-      should_query._all.push([currentWord, "multi_match"]);
+      if (!keywords.includes(wordList[i + 1])) {
+        should_query._all.push([currentWord, "multi_match"]);
+      }
       i++;
     }
   }
@@ -294,13 +321,6 @@ function query_parser(text) {
   return [must_query, should_query, sort_query];
 }
 
-var sample_text =
-  "අමරදේව සහ ලතගෙ හොඳම ගීත 10 විනාඩි 3ත් 4ත් අතර ගීත සමන් රචිත අමර චිත්‍රපටයේ ගීත කමල් ලියූ";
-
-t1 = Date.now();
-const [a, b, c] = query_parser(sample_text);
-t2 = Date.now();
-
 function query_generator(must_query, should_query, sort_query) {
   var query = {};
   if (sort_query.length > 0) {
@@ -325,18 +345,19 @@ function query_generator(must_query, should_query, sort_query) {
             var temp_q_m = { match: {} };
             temp_q_m.match[key] = { query: must_query[key][valIndex][0] };
             query.query.bool.must.push(temp_q_m);
+
             break;
           case "multi_match_phrase":
             var temp_q_mm = {
               multi_match: {
                 fields: [
-                  "artist",
-                  "lyrics",
-                  "lyrics_by",
-                  "music",
-                  "movie",
-                  "genre",
-                  "song_name",
+                  "artist^2",
+                  "lyrics^4",
+                  "lyrics_by^1",
+                  "music^1",
+                  "movie^2",
+                  "genre^2",
+                  "song_name^3",
                 ],
                 type: "phrase",
               },
@@ -360,13 +381,13 @@ function query_generator(must_query, should_query, sort_query) {
             var temp_q_mm = {
               multi_match: {
                 fields: [
-                  "artist",
-                  "lyrics",
-                  "lyrics_by",
-                  "music",
-                  "movie",
-                  "genre",
-                  "song_name",
+                  "artist^4",
+                  "lyrics^1",
+                  "lyrics_by^2",
+                  "music^2",
+                  "movie^1",
+                  "genre^2",
+                  "song_name^2",
                 ],
               },
             };
@@ -396,27 +417,39 @@ function query_generator(must_query, should_query, sort_query) {
             temp_q_m.match[key] = { query: should_query[key][valIndex][0] };
             query.query.bool.should.push(temp_q_m);
             break;
-          case "match_phrase":
-            var temp_q_mp = { match_phrase: {} };
-            temp_q_mp.match_phrase[key] = {
-              query: should_query[key][valIndex][0],
+          case "multi_match_phrase":
+            var temp_q_mm = {
+              multi_match: {
+                fields: [
+                  "artist^2",
+                  "lyrics^4",
+                  "lyrics_by^1",
+                  "music^1",
+                  "movie^2",
+                  "genre^2",
+                  "song_name^3",
+                ],
+                type: "phrase",
+              },
             };
-            query.query.bool.should.push(temp_q_mp);
+            temp_q_mm.multi_match["query"] = should_query[key][valIndex][0];
+            query.query.bool.should.push(temp_q_mm);
             break;
           case "multi_match":
             var temp_q_mm = {
               multi_match: {
                 fields: [
-                  "artist",
-                  "lyrics",
-                  "lyrics_by",
-                  "music",
-                  "movie",
-                  "genre",
-                  "song_name",
+                  "artist^4",
+                  "lyrics^1",
+                  "lyrics_by^2",
+                  "music^2",
+                  "movie^1",
+                  "genre^2",
+                  "song_name^2",
                 ],
               },
             };
+
             temp_q_mm.multi_match["query"] = should_query[key][valIndex][0];
             query.query.bool.should.push(temp_q_mm);
             break;
@@ -429,8 +462,14 @@ function query_generator(must_query, should_query, sort_query) {
 
   return query;
 }
-
+var sample_text =
+  'අමරදේව සහ ලතගෙ හොඳම ගීත 10 විනාඩි 3ත් 4ත් අතර ගීත සමන් රචිත අමර චිත්‍රපටයේ ගීත කමල් ලියූ "මගේ පුන්චි රෝස මලේ" බ්හග්‍ය ගැයූ ';
+var st = "ජෝතිගෙ සහ ලතාගෙ ";
+t1 = Date.now();
+const [a, b, c] = query_parser(st);
 q = query_generator(a, b, c);
+t2 = Date.now();
+console.log(t2 - t1);
 q = JSON.stringify(q);
 fs.writeFile("query.json", q, (err) => {
   if (err) console.log(err);

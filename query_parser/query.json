@@ -1,71 +1,9 @@
 {
-  "size": 10,
-  "sort": [{ "rating": "desc", "_score": "desc" }],
   "query": {
     "bool": {
       "must": [
-        {
-          "multi_match": {
-            "fields": [
-              "artist",
-              "lyrics",
-              "lyrics_by",
-              "music",
-              "movie",
-              "genre",
-              "song_name"
-            ],
-            "query": "අමරදේව"
-          }
-        },
-        { "match": { "artist": { "query": "ලත" } } },
-        { "match": { "lyrics_by": { "query": "සමන්" } } },
-        { "range": { "duration": { "gte": 180, "lte": 240 } } },
-        { "match": { "movie": { "query": "අමර" } } }
-      ],
-      "should": [
-        {
-          "multi_match": {
-            "fields": [
-              "artist",
-              "lyrics",
-              "lyrics_by",
-              "music",
-              "movie",
-              "genre",
-              "song_name"
-            ],
-            "query": "සමන්"
-          }
-        },
-        {
-          "multi_match": {
-            "fields": [
-              "artist",
-              "lyrics",
-              "lyrics_by",
-              "music",
-              "movie",
-              "genre",
-              "song_name"
-            ],
-            "query": "අමර"
-          }
-        },
-        {
-          "multi_match": {
-            "fields": [
-              "artist",
-              "lyrics",
-              "lyrics_by",
-              "music",
-              "movie",
-              "genre",
-              "song_name"
-            ],
-            "query": "කමල්"
-          }
-        }
+        { "match": { "artist": { "query": "ජෝති" } } },
+        { "match": { "artist": { "query": "ලතා" } } }
       ]
     }
   }
