@@ -5,6 +5,6 @@ how to run
 after scraping the songs run below commands
 
 run "node formatsongs.js"
-run "makeBulk.js"
+run "node makeBulk.js"
 
-// a data.json file will be generated on root directory with indexed data. Those data can be insert to elasticsearch later
+// a data.txt file will be generated on root directory with indexed data. Those data can be insert to elasticsearch later

@@ -358,7 +358,7 @@ function query_generator(must_query, should_query, sort_query, filter_query) {
               multi_match: {
                 fields: [
                   "artist^4",
-                  "lyrics^3",
+                  "lyrics^4",
                   "lyrics_by^2",
                   "music^2",
                   "movie^1",
@@ -416,7 +416,7 @@ function query_generator(must_query, should_query, sort_query, filter_query) {
               multi_match: {
                 fields: [
                   "artist^4",
-                  "lyrics^3",
+                  "lyrics^4",
                   "lyrics_by^2",
                   "music^2",
                   "movie^1",
@@ -472,13 +472,17 @@ var q2 = "ජෝතිපාලගෙ සහ ලතාගෙ සින්දු 
 var q3 = "ජෝතිපාල හා ලතාගෙ සින්දු ";
 var q4 = "අමරදේවගෙ හොඳම ගීත 10 ";
 var q5 = "මිල්ටන්ගෙ විනාඩි 3ට වැඩි සින්දු ";
-var q6 = "කපුගේගෙ විනාඩි 3ත් 4ත් අතර සින්දු ";
+var q6 = "කපුගේගෙ විනාඩි 3ත් 4ත් අතර හොඳම ගීත 10 ";
 var q7 = '"කරුනාරත්න අබේසේකර" ලිවූ සින්දු ';
 var q8 = '"කරුනාරත්න අබේසේකර" ලිවූ හොඳම ගීත 20 ';
 var q9 = '"අතින් අතට" චිත්‍රපටයේ සින්දු';
 var q10 = "දීවරයො චිත්‍රපටයේ ගීත ";
+var q11 = "කසුන්ගෙ සින්දු";
+var q12 = "අඬන්නෙ ඇයි සුදු මැණිකේ";
+var q13 = '"අඬන්නෙ ඇයි සුදු මැණිකේ" ';
+var q14 = "අම්මා ";
 t1 = Date.now();
-const [a, b, c, d] = query_parser(q4);
+const [a, b, c, d] = query_parser(q6);
 q = query_generator(a, b, c, d);
 t2 = Date.now();
 console.log(t2 - t1);

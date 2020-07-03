@@ -2,6 +2,9 @@
   "size": 10,
   "sort": [{ "rating": "desc", "_score": "desc" }],
   "query": {
-    "bool": { "should": [{ "match": { "artist": { "query": "අමරදේව" } } }] }
+    "bool": {
+      "should": [{ "match": { "artist": { "query": "කපුගේ" } } }],
+      "filter": [{ "range": { "duration": { "gte": 180, "lte": 240 } } }]
+    }
   }
 }

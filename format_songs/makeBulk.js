@@ -135,3 +135,31 @@ function ratingsGenerator() {
 }
 
 run();
+
+async function gTranslator(text) {
+  const txtArr = text.split(" ");
+  return googleTranslator(txtArr, { from: "en", to: "si" })
+    .then(function (result) {
+      return result.text;
+    })
+    .catch(function (error) {
+      console.error(error);
+    });
+}
+
+async function slinglishToSinhala(text) {
+  if (text === "" || undefined) {
+    return "";
+  }
+  var a = await gTranslator(text);
+  if (a === undefined) {
+    return "";
+  }
+  a = a.split("\n").join(" ");
+  return a;
+}
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}

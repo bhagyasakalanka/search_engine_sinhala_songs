@@ -12,6 +12,8 @@
     "rollup": "^1.32.1"
   },
   "dependencies": {
+    "google-translate": "^3.0.0",
+    "googletrans": "^1.0.0",
     "puppeteer": "^4.0.0"
   }
 }

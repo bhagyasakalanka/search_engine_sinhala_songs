@@ -110,7 +110,7 @@ function one_text_parse(text) {
       unicode_string += " ";
       i++;
     } else if (text[i + 1] === ".") {
-      unicode_string += sir_names[text[i]] + ".";
+      unicode_string += sir_names[text[i]] + ". ";
       i += 2;
     } else if (vowels[text[i]] !== undefined) {
       if (doublevowels[text[i] + text[i + 1]] !== undefined) {

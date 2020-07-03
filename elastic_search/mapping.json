@@ -1,0 +1,83 @@
+{
+  "settings": {
+    "index": {
+      "max_ngram_diff": 2
+    },
+    "analysis": {
+      "analyzer": {
+        "my_analyzer": {
+          "type": "custom",
+          "tokenizer": "punctuation",
+          "filter": ["my_gram"]
+        },
+        "my_analyzer_movie": {
+          "type": "custom",
+          "tokenizer": "punctuation_not_space",
+          "filter": ["my_gram_movie"]
+        },
+        "search_analyzer": {
+          "type": "custom",
+          "tokenizer": "punctuation"
+        }
+      },
+      "filter": {
+        "my_gram": {
+          "type": "edge_ngram",
+          "min_gram": 2,
+          "max_gram": 50
+        },
+        "my_gram_movie": {
+          "type": "edge_ngram",
+          "min_gram": 6,
+          "max_gram": 50
+        }
+      },
+      "tokenizer": {
+        "punctuation": {
+          "type": "pattern",
+          "pattern": "[ .,!?]"
+        },
+        "punctuation_not_space": {
+          "type": "pattern",
+          "pattern": "[.,!?]"
+        }
+      }
+    }
+  },
+  "mappings": {
+    "dynamic": "strict",
+    "properties": {
+      "song_name": {
+        "type": "text"
+      },
+      "artist": {
+        "type": "text",
+        "analyzer": "my_analyzer"
+      },
+      "genre": {
+        "type": "text"
+      },
+      "lyrics_by": {
+        "type": "text",
+        "analyzer": "my_analyzer"
+      },
+      "music": {
+        "type": "text",
+        "analyzer": "my_analyzer"
+      },
+      "duration": {
+        "type": "integer"
+      },
+      "movie": {
+        "type": "text",
+        "analyzer": "my_analyzer_movie"
+      },
+      "rating": {
+        "type": "integer"
+      },
+      "lyrics": {
+        "type": "text"
+      }
+    }
+  }
+}
